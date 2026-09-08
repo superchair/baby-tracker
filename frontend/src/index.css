@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+/* Recharts adds tabIndex to chart shapes/legend items for keyboard nav;
+   tapping one triggers the browser's default focus ring. Scoped to charts
+   only so real interactive elements (buttons, inputs) keep their focus
+   indicator for keyboard/accessibility use. */
+.recharts-wrapper *:focus {
+  outline: none;
+}

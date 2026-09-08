@@ -1,0 +1,33 @@
+{
+  "name": "infra",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk"
+  },
+  "devDependencies": {
+    "@swc/core": "^1.15.0",
+    "@swc/jest": "^0.2.39",
+    "@types/aws-lambda": "^8.10.162",
+    "@types/jest": "^30",
+    "@types/node": "^24.10.1",
+    "@types/web-push": "^3.6.4",
+    "aws-cdk": "2.1139.0",
+    "esbuild": "^0.28.2",
+    "jest": "^30",
+    "tsx": "^4.23.0",
+    "typescript": "~7.0.2"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1121.0",
+    "@aws-sdk/client-secrets-manager": "^3.1121.0",
+    "@aws-sdk/lib-dynamodb": "^3.1121.0",
+    "aws-cdk-lib": "^2.266.0",
+    "aws-jwt-verify": "^5.2.1",
+    "constructs": "^10.5.0",
+    "web-push": "^3.6.7",
+    "zod": "^4.5.4"
+  }
+}

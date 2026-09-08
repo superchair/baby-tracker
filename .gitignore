@@ -1,0 +1,11 @@
+# OS cruft
+.DS_Store
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Personal data - never commit real feeding/diaper logs
+historical.txt
+*.local.txt
