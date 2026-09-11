@@ -1,13 +1,27 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { ApiError, getEvents } from '../api/client';
 import type { Event } from '../api/types';
-import { DailyActivityChart } from '../components/dashboard/DailyActivityChart';
 import { DiaperLogger } from '../components/dashboard/DiaperLogger';
 import { FeedingTracker } from '../components/dashboard/FeedingTracker';
 import { RecentSummary } from '../components/dashboard/RecentSummary';
 import { ErrorBanner } from '../components/ErrorBanner';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { EVENT_META } from '../utils/eventMeta';
+
+// Lazy-loaded because it pulls in Recharts -- the log buttons above it are
+// the most tapped, most latency-sensitive part of the app and shouldn't
+// wait on that chunk to download.
+const DailyActivityChart = lazy(() =>
+  import('../components/dashboard/DailyActivityChart').then((m) => ({ default: m.DailyActivityChart })),
+);
+
+function ChartLoadingPlaceholder() {
+  return (
+    <div className="flex h-[277px] items-center justify-center rounded-2xl bg-white text-sm text-slate-500 shadow-sm ring-1 ring-slate-100">
+      Loading…
+    </div>
+  );
+}
 
 type ActiveLogger = 'FEEDING' | 'DIAPER' | null;
 
@@ -72,7 +86,9 @@ export default function Dashboard() {
       )}
       {activeLogger === 'FEEDING' && <FeedingTracker onClose={() => setActiveLogger(null)} onLogged={refreshAll} />}
       {activeLogger === 'DIAPER' && <DiaperLogger onClose={() => setActiveLogger(null)} onLogged={refreshAll} />}
-      <DailyActivityChart refreshKey={activityRefreshKey} />
+      <Suspense fallback={<ChartLoadingPlaceholder />}>
+        <DailyActivityChart refreshKey={activityRefreshKey} />
+      </Suspense>
     </div>
   );
 }

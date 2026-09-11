@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Auth0Provider } from '@auth0/auth0-react';
 import type { AppState } from '@auth0/auth0-react';
@@ -10,11 +10,14 @@ import { Layout } from './components/Layout';
 import { LoadingScreen } from './components/LoadingScreen';
 import { ProtectedRoute, PublicOnlyRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
-import Dashboard from './pages/Dashboard';
-import History from './pages/History';
-import Login from './pages/Login';
-import Settings from './pages/Settings';
-import Stats from './pages/Stats';
+
+// Route-level code splitting: each page (and its dependencies, e.g. Recharts
+// for Stats) loads on demand instead of all being in the initial bundle.
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const History = lazy(() => import('./pages/History'));
+const Login = lazy(() => import('./pages/Login'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Stats = lazy(() => import('./pages/Stats'));
 
 /** Wires Auth0's post-login redirect back into React Router. Must live
  * inside BrowserRouter (needs useNavigate) and outside our own AuthProvider
@@ -90,20 +93,22 @@ function App() {
       <BrowserRouter>
         <Auth0ProviderWithNavigate>
           <AuthProvider>
-            <Routes>
-              <Route element={<PublicOnlyRoute />}>
-                <Route path="/login" element={<Login />} />
-              </Route>
-              <Route element={<ProtectedRoute />}>
-                <Route element={<Layout />}>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/history" element={<History />} />
-                  <Route path="/stats" element={<Stats />} />
-                  <Route path="/settings" element={<Settings />} />
+            <Suspense fallback={<LoadingScreen label="Loading…" />}>
+              <Routes>
+                <Route element={<PublicOnlyRoute />}>
+                  <Route path="/login" element={<Login />} />
                 </Route>
-              </Route>
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+                <Route element={<ProtectedRoute />}>
+                  <Route element={<Layout />}>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/history" element={<History />} />
+                    <Route path="/stats" element={<Stats />} />
+                    <Route path="/settings" element={<Settings />} />
+                  </Route>
+                </Route>
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
           </AuthProvider>
         </Auth0ProviderWithNavigate>
       </BrowserRouter>
