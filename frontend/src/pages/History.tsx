@@ -15,7 +15,7 @@ const TYPE_FILTERS: { value: EventType | 'ALL'; label: string }[] = [
 
 export default function History() {
   const [typeFilter, setTypeFilter] = useState<EventType | 'ALL'>('ALL');
-  const [from, setFrom] = useState(toDateInputValue(startOfDaysAgo(30)));
+  const [from, setFrom] = useState(toDateInputValue(startOfDaysAgo(1)));
   const [to, setTo] = useState(toDateInputValue(new Date()));
   const [caregiverFilter, setCaregiverFilter] = useState<string>('ALL');
 
