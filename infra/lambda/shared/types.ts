@@ -173,8 +173,36 @@ export interface PushSubscriptionRecord {
 
 export const PUSHSUB_PK = "PUSHSUB";
 
+// Known Web Push service hosts. reminderCheck later fetches `endpoint` as a
+// URL on a schedule -- without this allowlist, an authenticated caller could
+// register an arbitrary internal/external URL as a subscription (SSRF).
+const ALLOWED_PUSH_ENDPOINT_HOSTS = [
+  "fcm.googleapis.com", // Chrome, Edge, Opera, Samsung Internet, etc.
+  "android.googleapis.com", // legacy GCM
+  "updates.push.services.mozilla.com", // Firefox
+  "web.push.apple.com", // Safari / WebKit
+];
+
+export function isAllowedPushEndpoint(value: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:") return false;
+  return ALLOWED_PUSH_ENDPOINT_HOSTS.some(
+    (host) => url.hostname === host || url.hostname.endsWith(`.${host}`),
+  );
+}
+
 export const PushSubscribeBodySchema = z.object({
-  endpoint: z.string().min(1),
+  endpoint: z
+    .string()
+    .min(1)
+    .refine(isAllowedPushEndpoint, {
+      message: "endpoint must be an https URL from a known push service",
+    }),
   keys: z.object({
     p256dh: z.string().min(1),
     auth: z.string().min(1),

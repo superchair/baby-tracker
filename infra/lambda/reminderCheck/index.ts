@@ -9,6 +9,7 @@ import {
   PUSHSUB_PK,
   PushSubscriptionRecord,
   gsi1pkForType,
+  isAllowedPushEndpoint,
 } from "../shared/types.js";
 
 const REMINDER_TYPES: Extract<EventType, "FEEDING" | "DIAPER">[] = [
@@ -61,6 +62,15 @@ async function notifySubscribers(
 ): Promise<void> {
   await Promise.all(
     subscriptions.map(async (sub) => {
+      // Defense in depth: re-check the endpoint even though pushSubscribe
+      // already validates it, in case a bad record predates that check.
+      if (!isAllowedPushEndpoint(sub.endpoint)) {
+        console.error("skipping disallowed push endpoint", sub.SK);
+        await ddb.send(
+          new DeleteCommand({ TableName: TABLE_NAME, Key: { PK: sub.PK, SK: sub.SK } }),
+        ).catch(() => undefined);
+        return;
+      }
       try {
         await webpush.sendNotification(
           {
