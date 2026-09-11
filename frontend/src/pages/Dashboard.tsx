@@ -64,7 +64,7 @@ export default function Dashboard() {
       <RecentSummary lastFeeding={lastFeeding} lastDiaper={lastDiaper} />
       {activeLogger === null && (
         <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-3">
             <button
               type="button"
               onClick={() => setActiveLogger('FEEDING')}
