@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib/core';
-import { CorsHttpMethod, HttpApi, HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
+import { CfnStage, CorsHttpMethod, HttpApi, HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import {
   HttpLambdaAuthorizer,
@@ -39,6 +39,17 @@ export function createApi(
     },
     defaultAuthorizer: authorizer,
   });
+
+  // Throttle the auto-created default stage in place via the L1 escape
+  // hatch (there's no L2 prop for this on HttpApi) -- a household of a
+  // couple of people never needs anywhere near the account-level default
+  // (thousands of req/s), and this bounds the cost/DoS blast radius of a
+  // leaked or abused token.
+  const cfnStage = httpApi.defaultStage!.node.defaultChild as CfnStage;
+  cfnStage.defaultRouteSettings = {
+    throttlingRateLimit: 10,
+    throttlingBurstLimit: 20,
+  };
 
   httpApi.addRoutes({
     path: '/events',
