@@ -23,8 +23,8 @@ export default function Dashboard() {
     setError(null);
     try {
       const [feedingRes, diaperRes] = await Promise.all([
-        getEvents({ type: 'FEEDING' }),
-        getEvents({ type: 'DIAPER' }),
+        getEvents({ type: 'FEEDING', limit: '1' }),
+        getEvents({ type: 'DIAPER', limit: '1' }),
       ]);
       setLastFeeding(feedingRes.events[0] ?? null);
       setLastDiaper(diaperRes.events[0] ?? null);

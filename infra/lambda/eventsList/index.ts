@@ -19,17 +19,22 @@ const HIGH_SUFFIX = "￿";
 
 async function queryAll(
   params: ConstructorParameters<typeof QueryCommand>[0],
+  limit?: number,
 ): Promise<Record<string, unknown>[]> {
   const items: Record<string, unknown>[] = [];
   let ExclusiveStartKey: Record<string, unknown> | undefined;
   do {
     const result = await ddb.send(
-      new QueryCommand({ ...params, ExclusiveStartKey }),
+      new QueryCommand({
+        ...params,
+        ExclusiveStartKey,
+        ...(limit ? { Limit: limit - items.length } : {}),
+      }),
     );
     items.push(...((result.Items as Record<string, unknown>[]) ?? []));
     ExclusiveStartKey = result.LastEvaluatedKey;
-  } while (ExclusiveStartKey);
-  return items;
+  } while (ExclusiveStartKey && (!limit || items.length < limit));
+  return limit ? items.slice(0, limit) : items;
 }
 
 export async function handler(
@@ -48,30 +53,45 @@ export async function handler(
       return errorResponse(400, "invalid type");
     }
 
+    let limit: number | undefined;
+    if (qs.limit !== undefined) {
+      const n = Number(qs.limit);
+      if (!Number.isInteger(n) || n <= 0) {
+        return errorResponse(400, "invalid limit");
+      }
+      limit = n;
+    }
+
     let items: Record<string, unknown>[];
     if (type) {
-      items = await queryAll({
-        TableName: TABLE_NAME,
-        IndexName: "GSI1",
-        KeyConditionExpression: "GSI1PK = :pk AND GSI1SK BETWEEN :from AND :to",
-        ExpressionAttributeValues: {
-          ":pk": gsi1pkForType(type),
-          ":from": from,
-          ":to": to,
+      items = await queryAll(
+        {
+          TableName: TABLE_NAME,
+          IndexName: "GSI1",
+          KeyConditionExpression: "GSI1PK = :pk AND GSI1SK BETWEEN :from AND :to",
+          ExpressionAttributeValues: {
+            ":pk": gsi1pkForType(type),
+            ":from": from,
+            ":to": to,
+          },
+          ScanIndexForward: false,
         },
-        ScanIndexForward: false,
-      });
+        limit,
+      );
     } else {
-      items = await queryAll({
-        TableName: TABLE_NAME,
-        KeyConditionExpression: "PK = :pk AND SK BETWEEN :from AND :to",
-        ExpressionAttributeValues: {
-          ":pk": BABY_PK,
-          ":from": `EVENT#${from}`,
-          ":to": `EVENT#${to}${HIGH_SUFFIX}`,
+      items = await queryAll(
+        {
+          TableName: TABLE_NAME,
+          KeyConditionExpression: "PK = :pk AND SK BETWEEN :from AND :to",
+          ExpressionAttributeValues: {
+            ":pk": BABY_PK,
+            ":from": `EVENT#${from}`,
+            ":to": `EVENT#${to}${HIGH_SUFFIX}`,
+          },
+          ScanIndexForward: false,
         },
-        ScanIndexForward: false,
-      });
+        limit,
+      );
     }
 
     const events = items

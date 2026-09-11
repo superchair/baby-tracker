@@ -56,6 +56,8 @@ export interface GetEventsQuery {
   from?: string;
   to?: string;
   type?: EventType;
+  /** Caps the number of most-recent events returned (server still sorts newest-first). */
+  limit?: string;
 }
 
 export interface GetEventsResponse {
