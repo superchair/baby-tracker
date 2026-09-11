@@ -24,6 +24,15 @@ interface FnOptions {
   needsSecret?: boolean;
   timeout?: cdk.Duration;
   extraEnv?: Record<string, string>;
+  /**
+   * Lambda CPU scales with memory. 256MB (default) is plenty for the
+   * plain DynamoDB CRUD handlers, which are I/O-bound waiting on network
+   * round-trips rather than compute. Functions that do meaningful crypto
+   * work (RS256 JWT verification, VAPID/web-push signing+encryption)
+   * pass a higher value, since more CPU there translates directly into
+   * lower latency/cost rather than just waiting faster.
+   */
+  memorySize?: number;
 }
 
 export function createLambdas(
@@ -39,6 +48,7 @@ export function createLambdas(
       needsSecret = true,
       timeout = cdk.Duration.seconds(10),
       extraEnv,
+      memorySize = 256,
     } = options;
 
     const environment: Record<string, string> = { ...extraEnv };
@@ -50,7 +60,7 @@ export function createLambdas(
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
       architecture: lambda.Architecture.ARM_64,
-      memorySize: 256,
+      memorySize,
       timeout,
       environment,
       bundling: {
@@ -74,6 +84,7 @@ export function createLambdas(
     authorizer: fn('authorizer', {
       needsTable: false,
       needsSecret: false,
+      memorySize: 512,
       extraEnv: {
         AUTH0_DOMAIN: 'brownserv.us.auth0.com',
         AUTH0_AUDIENCE: 'https://baby.brownserv.org',
@@ -87,6 +98,6 @@ export function createLambdas(
     configUpdate: fn('configUpdate', { needsSecret: false }),
     pushVapidKey: fn('pushVapidKey', { needsTable: false }),
     pushSubscribe: fn('pushSubscribe', { needsSecret: false }),
-    reminderCheck: fn('reminderCheck', { timeout: cdk.Duration.seconds(30) }),
+    reminderCheck: fn('reminderCheck', { timeout: cdk.Duration.seconds(30), memorySize: 512 }),
   };
 }
