@@ -14,12 +14,17 @@ import {
 type AuthCtx = { caregiverName: string };
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+// Absolute ceilings so a caller (or a bug) can't force an unbounded scan --
+// the response gracefully truncates to the most recent data rather than
+// erroring, both for date range width and item count.
+const MAX_RANGE_MS = 90 * 24 * 60 * 60 * 1000; // 90 days
+const MAX_ITEMS = 1000;
 // Sorts after any typical id/timestamp suffix character.
 const HIGH_SUFFIX = "￿";
 
 async function queryAll(
   params: ConstructorParameters<typeof QueryCommand>[0],
-  limit?: number,
+  limit: number,
 ): Promise<Record<string, unknown>[]> {
   const items: Record<string, unknown>[] = [];
   let ExclusiveStartKey: Record<string, unknown> | undefined;
@@ -28,13 +33,13 @@ async function queryAll(
       new QueryCommand({
         ...params,
         ExclusiveStartKey,
-        ...(limit ? { Limit: limit - items.length } : {}),
+        Limit: limit - items.length,
       }),
     );
     items.push(...((result.Items as Record<string, unknown>[]) ?? []));
     ExclusiveStartKey = result.LastEvaluatedKey;
-  } while (ExclusiveStartKey && (!limit || items.length < limit));
-  return limit ? items.slice(0, limit) : items;
+  } while (ExclusiveStartKey && items.length < limit);
+  return items.slice(0, limit);
 }
 
 export async function handler(
@@ -45,21 +50,35 @@ export async function handler(
 
     const qs = event.queryStringParameters ?? {};
     const now = new Date();
-    const from = qs.from ?? new Date(now.getTime() - THIRTY_DAYS_MS).toISOString();
-    const to = qs.to ?? now.toISOString();
+
+    const toMs = qs.to ? Date.parse(qs.to) : now.getTime();
+    if (Number.isNaN(toMs)) {
+      return errorResponse(400, "invalid to");
+    }
+
+    const fromMsRaw = qs.from ? Date.parse(qs.from) : toMs - THIRTY_DAYS_MS;
+    if (Number.isNaN(fromMsRaw)) {
+      return errorResponse(400, "invalid from");
+    }
+    // Clamp silently rather than erroring -- keeps the most recent portion
+    // of an overly wide range instead of breaking the caller.
+    const fromMs = Math.max(fromMsRaw, toMs - MAX_RANGE_MS);
+
+    const from = new Date(fromMs).toISOString();
+    const to = new Date(toMs).toISOString();
     const type = qs.type as EventType | undefined;
 
     if (type && !EVENT_TYPES.includes(type)) {
       return errorResponse(400, "invalid type");
     }
 
-    let limit: number | undefined;
+    let limit = MAX_ITEMS;
     if (qs.limit !== undefined) {
       const n = Number(qs.limit);
       if (!Number.isInteger(n) || n <= 0) {
         return errorResponse(400, "invalid limit");
       }
-      limit = n;
+      limit = Math.min(n, MAX_ITEMS);
     }
 
     let items: Record<string, unknown>[];
