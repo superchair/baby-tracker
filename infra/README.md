@@ -146,11 +146,20 @@ immediately.
 - **Lambda** — Node.js 20.x / ARM_64, bundled with esbuild via
   `aws-lambda-nodejs`. Handlers live under `lambda/<name>/index.ts`,
   sharing common DynamoDB/secrets/Auth0-verification helpers under
-  `lambda/shared/`.
+  `lambda/shared/`. Memory defaults to 256MB (fine for the I/O-bound
+  DynamoDB CRUD handlers); `authorizer` and `reminderCheck` are bumped to
+  512MB since they do meaningful CPU-bound crypto work (RS256 JWT
+  verification; VAPID/web-push signing and encryption).
 - **HTTP API** (API Gateway v2) — routes listed in `lib/api.ts`, all
   protected by a Lambda authorizer (`lambda/authorizer`) that verifies
   Auth0-issued access tokens via JWKS. CORS is scoped to the custom domain
   site URL plus `http://localhost:5173` for local frontend development.
+  The default stage is throttled (10 req/s, burst 20). `GET /events`
+  (`lambda/eventsList`) caps date ranges to 90 days and results to 1000
+  items, clamping/truncating rather than erroring. `POST /push/subscribe`
+  only accepts `endpoint` URLs from a small allowlist of known Web Push
+  services (FCM, Apple, Mozilla) — re-checked again in `reminderCheck`
+  before sending — to prevent SSRF via an arbitrary registered endpoint.
 - **S3 + CloudFront** — private bucket behind CloudFront using Origin
   Access Control; SPA-friendly 403/404 → `/index.html` (200) error
   mapping; deploys `../frontend/dist` plus a generated `config.json`

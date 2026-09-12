@@ -12,9 +12,11 @@ phone, installed as a PWA.
 
 - One-tap logging: feeding (with quick-set 30/60/90ml buttons) and diaper
   changes, both with an editable time defaulting to "now"
+- Dashboard shows a per-day feeding/diaper activity chart (defaults to
+  today, pick any past day via the date picker)
 - Filterable history (by type, date range, caregiver), with inline editing
-- Stats: today's feeding/diaper activity, feedings per day, feeding
-  volume (total + average per feeding), diaper changes per day
+- Stats: feedings per day, feeding volume (total + average per feeding),
+  diaper changes per day
 - Push notification reminders when it's been a while since the last
   feeding/diaper change
 - Installable as a PWA on iOS/Android/desktop
