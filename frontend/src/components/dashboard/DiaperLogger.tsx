@@ -50,7 +50,7 @@ export function DiaperLogger({ onClose, onLogged }: { onClose: () => void; onLog
           <button
             type="button"
             onClick={() => setWet((v) => !v)}
-            className={`rounded-xl py-3 text-sm font-semibold ${
+            className={`rounded-xl py-10 text-sm font-semibold ${
               wet ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600'
             }`}
           >
@@ -59,14 +59,14 @@ export function DiaperLogger({ onClose, onLogged }: { onClose: () => void; onLog
           <button
             type="button"
             onClick={() => setDirty((v) => !v)}
-            className={`rounded-xl py-3 text-sm font-semibold ${
+            className={`rounded-xl py-10 text-sm font-semibold ${
               dirty ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600'
             }`}
           >
             💩 Dirty
           </button>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2 pt-3">
           <button
             type="button"
             onClick={onClose}

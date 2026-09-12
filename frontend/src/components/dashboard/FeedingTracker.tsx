@@ -56,7 +56,7 @@ export function FeedingTracker({ onClose, onLogged }: { onClose: () => void; onL
                 key={amount}
                 type="button"
                 onClick={() => setAmountMl(String(amount))}
-                className={`rounded-xl py-4 text-lg font-semibold ${
+                className={`rounded-xl py-8 text-lg font-semibold ${
                   amountMl === String(amount) ? 'bg-sky-500 text-white' : 'bg-sky-50 text-sky-700'
                 }`}
               >
@@ -77,7 +77,7 @@ export function FeedingTracker({ onClose, onLogged }: { onClose: () => void; onL
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-base"
           />
         </label>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2 pt-3">
           <button
             type="button"
             onClick={onClose}

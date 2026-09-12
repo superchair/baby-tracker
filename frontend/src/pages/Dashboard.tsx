@@ -86,9 +86,11 @@ export default function Dashboard() {
       )}
       {activeLogger === 'FEEDING' && <FeedingTracker onClose={() => setActiveLogger(null)} onLogged={refreshAll} />}
       {activeLogger === 'DIAPER' && <DiaperLogger onClose={() => setActiveLogger(null)} onLogged={refreshAll} />}
-      <Suspense fallback={<ChartLoadingPlaceholder />}>
-        <DailyActivityChart refreshKey={activityRefreshKey} />
-      </Suspense>
+      {activeLogger === null && (
+        <Suspense fallback={<ChartLoadingPlaceholder />}>
+          <DailyActivityChart refreshKey={activityRefreshKey} />
+        </Suspense>
+      )}
     </div>
   );
 }
