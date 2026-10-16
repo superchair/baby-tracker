@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ApiError, createEvent } from '../../api/client';
 import { dateTimeInputValueToIso, toDateTimeInputValue } from '../../utils/time';
 
-const QUICK_AMOUNTS = [30, 60, 90];
+const QUICK_AMOUNTS = [30, 60, 90, 120, 150, 190];
 
 export function FeedingTracker({ onClose, onLogged }: { onClose: () => void; onLogged: () => void }) {
   const [time, setTime] = useState(() => toDateTimeInputValue(new Date()));
